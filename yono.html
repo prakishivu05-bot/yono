@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>YONO SBI - You Only Need One</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --sbi-blue: #003B7A;
+    --sbi-light-blue: #1565C0;
+    --sbi-teal: #00897B;
+    --sbi-green: #2E7D32;
+    --sbi-orange: #E65100;
+    --sbi-red: #C62828;
+    --sbi-gold: #F9A825;
+    --bg: #F0F4F8;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --subtext: #607080;
+    --border: #E0E8F0;
+    --shadow: 0 2px 12px rgba(0,59,122,0.10);
+    --radius: 16px;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; position: relative; overflow-x: hidden; }
+
+  /* SCREENS */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* SPLASH */
+  #splash { background: linear-gradient(160deg, #003B7A 0%, #1565C0 60%, #00897B 100%); align-items: center; justify-content: center; flex-direction: column; gap: 18px; }
+  .splash-logo { width: 90px; height: 90px; background: white; border-radius: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+  .splash-logo svg { width: 60px; height: 60px; }
+  .splash-title { color: white; font-size: 32px; font-weight: 800; letter-spacing: 1px; }
+  .splash-sub { color: rgba(255,255,255,0.75); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .splash-tagline { color: rgba(255,255,255,0.9); font-size: 15px; margin-top: 8px; }
+  .splash-btn { margin-top: 48px; background: white; color: var(--sbi-blue); border: none; border-radius: 50px; padding: 16px 56px; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transition: transform 0.1s; }
+  .splash-btn:active { transform: scale(0.97); }
+  .splash-links { display: flex; gap: 24px; margin-top: 20px; }
+  .splash-links span { color: rgba(255,255,255,0.8); font-size: 13px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.4); }
+
+  /* LOGIN */
+  #login { background: white; }
+  .login-header { background: linear-gradient(135deg, #003B7A, #1565C0); padding: 48px 24px 32px; color: white; }
+  .login-header h2 { font-size: 26px; font-weight: 700; }
+  .login-header p { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+  .login-body { padding: 32px 24px; flex: 1; }
+  .input-group { margin-bottom: 20px; }
+  .input-group label { display: block; font-size: 13px; color: var(--subtext); margin-bottom: 6px; font-weight: 500; }
+  .input-group input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 16px; color: var(--text); outline: none; transition: border 0.2s; background: #F8FBFF; }
+  .input-group input:focus { border-color: var(--sbi-light-blue); background: white; }
+  .btn-primary { width: 100%; background: linear-gradient(135deg, #003B7A, #1565C0); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.2s, transform 0.1s; }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.92; }
+  .login-options { display: flex; justify-content: space-between; margin-top: 20px; }
+  .login-options span { color: var(--sbi-light-blue); font-size: 13px; cursor: pointer; font-weight: 500; }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .divider span { color: var(--subtext); font-size: 13px; }
+  .mpin-dots { display: flex; justify-content: center; gap: 16px; margin: 24px 0; }
+  .mpin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--sbi-blue); background: transparent; transition: background 0.2s; }
+  .mpin-dot.filled { background: var(--sbi-blue); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+  .numpad-key { background: #F0F4F8; border: none; border-radius: 12px; padding: 18px; font-size: 20px; font-weight: 600; color: var(--text); cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .numpad-key:active { background: var(--border); transform: scale(0.95); }
+  .numpad-key.clear { color: var(--sbi-red); font-size: 14px; }
+  .numpad-key.bio { color: var(--sbi-blue); }
+
+  /* TOP BAR */
+  .topbar { background: var(--sbi-blue); color: white; padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-avatar { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .topbar-name { font-size: 15px; font-weight: 600; }
+  .topbar-date { font-size: 11px; opacity: 0.75; }
+  .topbar-right { display: flex; gap: 14px; align-items: center; }
+  .topbar-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* ACCOUNT CARD */
+  .account-card-wrap { background: var(--sbi-blue); padding: 0 16px 20px; }
+  .account-card { background: linear-gradient(135deg, #1565C0 0%, #003B7A 100%); border-radius: var(--radius); padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0,59,122,0.3); }
+  .account-card::after { content: ''; position: absolute; right: -20px; top: -20px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+  .account-card::before { content: ''; position: absolute; right: 30px; bottom: -30px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+  .ac-label { font-size: 12px; opacity: 0.75; letter-spacing: 0.5px; text-transform: uppercase; }
+  .ac-number { font-size: 14px; opacity: 0.85; margin: 4px 0 12px; letter-spacing: 1px; }
+  .ac-balance { font-size: 30px; font-weight: 800; }
+  .ac-balance span { font-size: 18px; font-weight: 500; }
+  .ac-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .ac-action { flex: 1; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s; }
+  .ac-action:active { background: rgba(255,255,255,0.25); }
+  .account-tabs { display: flex; background: rgba(255,255,255,0.1); border-radius: 8px; margin-top: 12px; }
+  .account-tab { flex: 1; text-align: center; padding: 8px; font-size: 12px; cursor: pointer; border-radius: 8px; transition: all 0.2s; opacity: 0.7; }
+  .account-tab.active { background: white; color: var(--sbi-blue); font-weight: 700; opacity: 1; }
+
+  /* QUICK ACTIONS */
+  .section { padding: 16px; }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .section-title span { color: var(--sbi-light-blue); font-size: 13px; font-weight: 500; cursor: pointer; }
+  .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .quick-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+  .quick-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: transform 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .quick-item:active .quick-icon { transform: scale(0.93); }
+  .quick-label { font-size: 11px; color: var(--subtext); text-align: center; font-weight: 500; line-height: 1.3; }
+  
+  /* TRANSACTIONS */
+  .txn-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .txn-item { background: white; display: flex; align-items: center; gap: 14px; padding: 14px 16px; cursor: pointer; transition: background 0.15s; }
+  .txn-item:active { background: #F5F8FF; }
+  .txn-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .txn-details { flex: 1; }
+  .txn-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .txn-date { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .txn-ref { font-size: 11px; color: #aaa; }
+  .txn-amount { text-align: right; }
+  .txn-amount .debit { color: var(--sbi-red); font-weight: 700; font-size: 15px; }
+  .txn-amount .credit { color: var(--sbi-green); font-weight: 700; font-size: 15px; }
+  .txn-amount .bal { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px 14px; cursor: pointer; transition: color 0.2s; color: var(--subtext); }
+  .nav-item.active { color: var(--sbi-blue); }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+  .nav-center { position: relative; }
+  .nav-center .nav-icon-wrap { width: 52px; height: 52px; background: linear-gradient(135deg, #003B7A, #00897B); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -22px; box-shadow: 0 4px 16px rgba(0,59,122,0.35); font-size: 24px; }
+  .nav-center .nav-label { color: var(--sbi-blue); font-weight: 700; }
+
+  /* PAGE CONTENT */
+  .page-content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+
+  /* OFFER CAROUSEL */
+  .offer-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 16px 4px; scrollbar-width: none; }
+  .offer-scroll::-webkit-scrollbar { display: none; }
+  .offer-card { min-width: 220px; background: linear-gradient(135deg, #E3F2FD, #BBDEFB); border-radius: 14px; padding: 16px; cursor: pointer; flex-shrink: 0; }
+  .offer-card h4 { font-size: 14px; font-weight: 700; color: var(--sbi-blue); }
+  .offer-card p { font-size: 12px; color: var(--subtext); margin-top: 4px; }
+  .offer-badge { display: inline-block; background: var(--sbi-blue); color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-top: 8px; font-weight: 600; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 430px; padding: 24px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+  .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--subtext); margin-top: -4px; }
+
+  /* TRANSFER */
+  .transfer-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .transfer-type { border: 2px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+  .transfer-type.selected { border-color: var(--sbi-blue); background: #EBF3FF; }
+  .transfer-type-icon { font-size: 24px; margin-bottom: 6px; }
+  .transfer-type h4 { font-size: 13px; font-weight: 700; }
+  .transfer-type p { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; }
+  .btn-outline { flex: 1; background: white; color: var(--sbi-blue); border: 2px solid var(--sbi-blue); border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn-solid { flex: 1; background: var(--sbi-blue); color: white; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+  /* STATUS BADGE */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #E8F5E9; color: var(--sbi-green); }
+  .badge-orange { background: #FFF3E0; color: var(--sbi-orange); }
+  .badge-red { background: #FFEBEE; color: var(--sbi-red); }
+  .badge-blue { background: #E3F2FD; color: var(--sbi-light-blue); }
+
+  /* CARDS */
+  .info-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .info-label { font-size: 13px; color: var(--subtext); }
+  .info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* UPI */
+  .upi-contact { display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow); cursor: pointer; }
+  .upi-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
+  .upi-name { font-size: 14px; font-weight: 600; }
+  .upi-vpa { font-size: 12px; color: var(--subtext); }
+  .upi-amount-hint { font-size: 12px; color: var(--sbi-green); font-weight: 500; }
+
+  /* INVESTMENTS */
+  .invest-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .invest-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .invest-name { font-size: 14px; font-weight: 700; }
+  .invest-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .invest-arrow { margin-left: auto; color: var(--subtext); font-size: 18px; }
+
+  /* YONO CASH */
+  .yono-cash-box { background: linear-gradient(135deg, #1B5E20, #2E7D32); border-radius: var(--radius); padding: 24px; color: white; text-align: center; }
+  .yono-cash-code { font-size: 36px; font-weight: 800; letter-spacing: 6px; margin: 16px 0; font-family: monospace; }
+  .yono-cash-pin { font-size: 28px; font-weight: 700; letter-spacing: 4px; font-family: monospace; color: #A5D6A7; }
+  .yono-cash-timer { font-size: 13px; opacity: 0.8; margin-top: 8px; }
+
+  /* ALERTS */
+  .alert-item { background: white; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; box-shadow: var(--shadow); border-left: 4px solid var(--sbi-blue); }
+  .alert-item.warning { border-color: var(--sbi-gold); }
+  .alert-item.success { border-color: var(--sbi-green); }
+  .alert-content h4 { font-size: 14px; font-weight: 600; }
+  .alert-content p { font-size: 12px; color: var(--subtext); margin-top: 3px; line-height: 1.4; }
+  .alert-content time { font-size: 11px; color: #aaa; display: block; margin-top: 4px; }
+
+  /* LOADERS */
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--sbi-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 40px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TABS */
+  .tab-bar { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 56px; z-index: 50; }
+  .tab-btn { flex: 1; padding: 13px 4px; text-align: center; font-size: 13px; font-weight: 600; color: var(--subtext); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-btn.active { color: var(--sbi-blue); border-color: var(--sbi-blue); }
+
+  /* REWARDS */
+  .reward-points { background: linear-gradient(135deg, #F9A825, #F57F17); border-radius: var(--radius); padding: 20px; color: white; text-align: center; margin-bottom: 16px; }
+  .reward-pts-number { font-size: 42px; font-weight: 800; }
+  .reward-pts-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  /* PROFILE */
+  .profile-header { background: linear-gradient(135deg, #003B7A, #1565C0); padding: 32px 24px 24px; color: white; text-align: center; }
+  .profile-avatar-big { width: 72px; height: 72px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; margin: 0 auto 12px; border: 3px solid rgba(255,255,255,0.4); }
+  .profile-name { font-size: 20px; font-weight: 700; }
+  .profile-cif { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+
+  /* SUCCESS OVERLAY */
+  .success-overlay { position: fixed; inset: 0; background: white; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .success-overlay.show { display: flex; }
+  .success-circle { width: 90px; height: 90px; background: var(--sbi-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-title { font-size: 22px; font-weight: 800; color: var(--text); }
+  .success-sub { font-size: 15px; color: var(--subtext); text-align: center; max-width: 280px; }
+  .success-ref { font-size: 13px; color: #aaa; font-family: monospace; }
+
+  /* SEARCH BAR */
+  .search-bar { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 14px; color: white; font-size: 14px; width: 100%; margin-bottom: 12px; }
+  .search-bar::placeholder { color: rgba(255,255,255,0.6); }
+
+  /* MISC */
+  .chip { display: inline-block; background: #EBF3FF; color: var(--sbi-blue); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-right: 8px; cursor: pointer; }
+  .chip.active { background: var(--sbi-blue); color: white; }
+  .divider-line { height: 8px; background: var(--bg); margin: 0 -16px; }
+  .empty-state { text-align: center; padding: 40px 24px; color: var(--subtext); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #323232; color: white; padding: 12px 24px; border-radius: 24px; font-size: 14px; z-index: 9999; display: none; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .toast.show { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* PASSBOOK */
+  .pb-header { background: var(--sbi-blue); color: white; padding: 16px; }
+  .pb-filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; scrollbar-width: none; }
+
+  /* LOANS */
+  .loan-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+  .loan-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .loan-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .loan-progress { height: 6px; background: var(--border); border-radius: 3px; margin: 10px 0; }
+  .loan-bar { height: 6px; background: linear-gradient(90deg, var(--sbi-blue), var(--sbi-teal)); border-radius: 3px; }
+
+  /* YONO CASH COUNTDOWN */
+  .countdown { display: inline-block; width: 48px; height: 48px; position: relative; }
+  .countdown svg { transform: rotate(-90deg); }
+  .countdown-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 13px; font-weight: 700; color: white; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-circle">✓</div>
+  <div class="success-title" id="successTitle">Transaction Successful!</div>
+  <div class="success-sub" id="successSub">Your transaction has been processed.</div>
+  <div class="success-ref" id="successRef">Ref: YONO0000000000</div>
+  <button class="btn-primary" style="width:200px;margin-top:16px" onclick="closeSuccess()">Done</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-handle"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- SCREENS -->
+
+<!-- SPLASH -->
+<div class="screen active" id="splash">
+  <div class="splash-logo">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="60" height="60" rx="12" fill="#003B7A"/>
+      <text x="8" y="42" font-size="28" font-weight="800" fill="white" font-family="Arial">SBI</text>
+      <rect x="8" y="46" width="44" height="3" rx="1.5" fill="#F9A825"/>
+    </svg>
+  </div>
+  <div class="splash-title">YONO SBI</div>
+  <div class="splash-sub">You Only Need One</div>
+  <div class="splash-tagline">Banking • Lifestyle • Rewards</div>
+  <button class="splash-btn" onclick="goTo('login')">Login / Register</button>
+  <div class="splash-links">
+    <span onclick="showToast('Demo mode — pre-login features')">Pre-Login</span>
+    <span onclick="showToast('Nearest ATM/Branch locator')">Locate Us</span>
+    <span onclick="showToast('SIA chatbot')">Ask SIA</span>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="login">
+  <div class="login-header">
+    <h2>Welcome Back 👋</h2>
+    <p>Login to YONO SBI securely</p>
+  </div>
+  <div class="login-body">
+    <p style="font-size:14px;color:var(--subtext);margin-bottom:20px">Enter your MPIN</p>
+    <div class="mpin-dots">
+      <div class="mpin-dot" id="d0"></div>
+      <div class="mpin-dot" id="d1"></div>
+      <div class="mpin-dot" id="d2"></div>
+      <div class="mpin-dot" id="d3"></div>
+    </div>
+    <div class="numpad">
+      <button class="numpad-key" onclick="enterPin('1')">1</button>
+      <button class="numpad-key" onclick="enterPin('2')">2</button>
+      <button class="numpad-key" onclick="enterPin('3')">3</button>
+      <button class="numpad-key" onclick="enterPin('4')">4</button>
+      <button class="numpad-key" onclick="enterPin('5')">5</button>
+      <button class="numpad-key" onclick="enterPin('6')">6</button>
+      <button class="numpad-key" onclick="enterPin('7')">7</button>
+      <button class="numpad-key" onclick="enterPin('8')">8</button>
+      <button class="numpad-key" onclick="enterPin('9')">9</button>
+      <button class="numpad-key bio" onclick="showToast('Biometric login')">👆</button>
+      <button class="numpad-key" onclick="enterPin('0')">0</button>
+      <button class="numpad-key clear" onclick="clearPin()">⌫</button>
+    </div>
+    <div class="login-options" style="margin-top:24px">
+      <span onclick="showToast('Forgot MPIN reset flow')">Forgot MPIN?</span>
+      <span onclick="showToast('New registration')">New User? Register</span>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="screen" id="register">
+  <div class="login-header">
+    <h2>Join YONO SBI ✨</h2>
+    <p>Set up your digital banking profile</p>
+  </div>
+  <div class="login-body">
+    <div class="input-group">
+      <label>Full Name</label>
+      <input type="text" id="regName" placeholder="e.g. Rahul Verma">
+    </div>
+    <div class="input-group">
+      <label>Choose 4-Digit MPIN</label>
+      <input type="password" id="regPin" placeholder="Enter exactly 4 digits" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+    </div>
+    <button class="btn-primary" style="margin-top:20px" onclick="registerUser()">Register Device</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="home">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-avatar" id="tbAvatar"></div>
+      <div>
+        <div class="topbar-name" id="tbName">User</div>
+        <div class="topbar-date" id="topbarDate"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon" onclick="showToast('Notifications')">🔔</div>
+      <div class="topbar-icon" onclick="showModal('search')">🔍</div>
+    </div>
+  </div>
+  <div class="page-content" id="homeContent">
+    <!-- Account Card -->
+    <div class="account-card-wrap">
+      <div class="account-tabs">
+        <div class="account-tab active" onclick="switchAccount(this,0)">Savings</div>
+        <div class="account-tab" onclick="switchAccount(this,1)">PPF</div>
+        <div class="account-tab" onclick="switchAccount(this,2)">RD</div>
+      </div>
+      <br>
+      <div class="account-card">
+        <div class="ac-label">SBI Savings Account</div>
+        <div class="ac-number" id="acNumber">●●●● ●●●● 4782</div>
+        <div class="ac-balance"><span>₹</span><span id="acBalance">1,24,580.00</span></div>
+        <div style="font-size:12px;opacity:0.7;margin-top:4px">Available Balance</div>
+        <div class="ac-actions">
+          <div class="ac-action" onclick="showModal('transfer')">⇄ Transfer</div>
+          <div class="ac-action" onclick="goToTab('upi')">📱 UPI Pay</div>
+          <div class="ac-action" onclick="showModal('passbook')">📋 Statement</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offers -->
+    <div class="section">
+      <div class="section-title">Exclusive Offers <span>View All</span></div>
+    </div>
+    <div class="offer-scroll">
+      <div class="offer-card" onclick="showToast('Personal Loan offer applied!')">
+        <h4>💳 Pre-Approved Loan</h4>
+        <p>₹5,00,000 pre-approved personal loan at 10.9% p.a.</p>
+        <div class="offer-badge">APPLY NOW</div>
+      </div>
+      <div class="offer-card" style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9)" onclick="showToast('FD offer selected!')">
+        <h4>🏦 FD @ 7.25% p.a.</h4>
+        <p>Senior citizens get 0.50% extra. Open FD instantly.</p>
+        <div class="offer-badge" style="background:var(--sbi-green)">OPEN FD</div>
+      </div>
+      <div class="offer-card" style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2)" onclick="showToast('Credit card offer!')">
+        <h4>💳 SBI SimplySave Card</h4>
+        <p>10X rewards on groceries & dining. ₹499/yr fee waived.</p>
+        <div class="offer-badge" style="background:var(--sbi-orange)">APPLY</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section" style="margin-top:12px">
+      <div class="section-title">Quick Actions <span>More</span></div>
+      <div class="quick-grid">
+        <div class="quick-item" onclick="showModal('transfer')">
+          <div class="quick-icon" style="background:#E3F2FD">💸</div>
+          <div class="quick-label">Fund Transfer</div>
+        </div>
+        <div class="quick-item" onclick="goToTab('upi')">
+          <div class="quick-icon" style="background:#E8F5E9">📱</div>
+          <div class="quick-label">UPI Pay</div>
+        </div>
+        <div class="quick-item" onclick="showModal('billpay')">
+          <div class="quick-icon" style="background:#FFF3E0">🧾</div>
+          <div class="quick-label">Bill Payment</div>
+        </div>
+        <div class="quick-item" onclick="showModal('yonocash')">
+          <div class="quick-icon" style="background:#E8F5E9">🏧</div>
+          <div class="quick-label">YONO Cash</div>
+        </div>
+        <div class="quick-item" onclick="showModal('recharge')">
+          <div class="quick-icon" style="background:#F3E5F5">📞</div>
+          <div class="quick-label">Recharge</div>
+        </div>
+        <div class="quick-item" onclick="showModal('loans')">
+          <div class="quick-icon" style="background:#FCE4EC">🏠</div>
+          <div class="quick-label">Apply Loan</div>
+        </div>
+        <div class="quick-item" onclick="showModal('fd')">
+          <div class="quick-icon" style="background:#E8EAF6">🏦</div>
+          <div class="quick-label">Fixed Deposit</div>
+        </div>
+        <div class="quick-item" onclick="showToast('Opening Demat & Trading')">
+          <div class="quick-icon" style="background:#E0F2F1">📈</div>
+          <div class="quick-label">Investments</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Second row quick actions -->
+    <div class="section">
+      <div class="quick-grid">
+        <div class="quick-item" onclick="showToast('Flight booking via YONO')">
+          <div class="quick-icon" style="background:#E3F2FD">✈️</div>
+          <div class="quick-label">Flights</div>
+        </div>
+        <div class="quick-item" onclick="showToast('Train booking (IRCTC)')">
+          <div class="quick-icon" style="background:#FFF3E0">🚂</div>
+          <div class="quick-label">Train</div>
+        </div>
+        <div class="quick-item" onclick="showToast('Hotel booking')">
+          <div class="quick-icon" style="background:#E8F5E9">🏨</div>
+          <div class="quick-label">Hotels</div>
+        </div>
+        <div class="quick-item" onclick="showToast('Shopping with SBI offers')">
+          <div class="quick-icon" style="background:#FCE4EC">🛍️</div>
+          <div class="quick-label">Shopping</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider-line"></div>
+
+    <!-- Recent Transactions -->
+    <div class="section">
+      <div class="section-title">Recent Transactions <span onclick="showModal('passbook')">See All</span></div>
+      <div class="txn-list" id="recentTxns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENTS / UPI -->
+<div class="screen" id="upi">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div style="font-size:22px;cursor:pointer" onclick="goToTab('home')">←</div>
+      <div style="margin-left:12px">
+        <div class="topbar-name">UPI Payments</div>
+        <div class="topbar-date">BHIM SBI Pay</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon" onclick="showToast('Scan QR Code')">📷</div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="section">
+      <div style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:24px">🔒</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--sbi-green)">UPI ID Active</div>
+          <div style="font-size:12px;color:var(--subtext)">ramesh.kumar@sbi</div>
+        </div>
+        <div style="margin-left:auto"><span class="badge badge-green">Verified</span></div>
+      </div>
+
+      <div class="section-title">Send Money</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div style="flex:1;background:white;border:2px solid var(--sbi-blue);border-radius:12px;padding:14px;text-align:center;cursor:pointer" onclick="showModal('upiSend')">
+          <div style="font-size:24px">📱</div>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">Mobile/UPI ID</div>
+        </div>
+        <div style="flex:1;background:white;border:2px solid var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer" onclick="showModal('upiSend')">
+          <div style="font-size:24px">📷</div>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">Scan QR</div>
+        </div>
+        <div style="flex:1;background:white;border:2px solid var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer" onclick="showModal('upiSend')">
+          <div style="font-size:24px">🏦</div>
+          <div style="font-size:13px;font-weight:600;margin-top:6px">Bank A/C</div>
+        </div>
+      </div>
+
+      <div class="section-title">Recent Contacts</div>
+      <div id="upiContacts"></div>
+
+      <div class="section-title" style="margin-top:16px">Collect Money</div>
+      <div style="background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showModal('upiCollect')">
+        <div style="font-size:28px">📲</div>
+        <div>
+          <div style="font-size:14px;font-weight:600">Request Payment</div>
+          <div style="font-size:12px;color:var(--subtext)">Send payment request via UPI</div>
+        </div>
+        <div style="margin-left:auto;color:var(--subtext)">›</div>
+      </div>
+
+      <div class="section-title" style="margin-top:16px">UPI Settings</div>
+      <div class="info-card">
+        <div class="info-row">
+          <span class="info-label">Daily Limit</span>
+          <span class="info-value">₹1,00,000</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Per Transaction</span>
+          <span class="info-value">₹1,00,000</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Linked Account</span>
+          <span class="info-value">●●●● 4782</span>
+        </div>
+        <div class="info-row" onclick="showToast('Manage UPI PIN')">
+          <span class="info-label">Change UPI PIN</span>
+          <span style="color:var(--sbi-blue);font-size:13px;font-weight:600">Change ›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<div class="screen" id="services">
+  <div class="topbar">
+    <div class="topbar-name" style="font-size:18px;padding:4px 0">Services</div>
+  </div>
+  <div class="page-content">
+    <div class="tab-bar">
+      <div class="tab-btn active" onclick="switchServicesTab(this,'banking')">Banking</div>
+      <div class="tab-btn" onclick="switchServicesTab(this,'investments')">Invest</div>
+      <div class="tab-btn" onclick="switchServicesTab(this,'cards')">Cards</div>
+      <div class="tab-btn" onclick="switchServicesTab(this,'insurance')">Insurance</div>
+    </div>
+    <div id="servicesTabContent" class="section"></div>
+  </div>
+</div>
+
+<!-- REWARDS -->
+<div class="screen" id="rewards">
+  <div class="topbar">
+    <div class="topbar-name" style="font-size:18px;padding:4px 0">YONO Rewards</div>
+  </div>
+  <div class="page-content">
+    <div class="section">
+      <div class="reward-points">
+        <div class="reward-pts-number">2,850</div>
+        <div class="reward-pts-label">SBI Reward Points</div>
+        <div style="font-size:12px;opacity:0.8;margin-top:4px">≈ ₹285 cashback value</div>
+        <button style="background:white;color:#E65100;border:none;border-radius:20px;padding:10px 28px;font-size:14px;font-weight:700;margin-top:16px;cursor:pointer" onclick="showToast('Redeeming reward points!')">Redeem Now</button>
+      </div>
+
+      <div class="section-title" style="margin-top:16px">Green Reward Points 🌱</div>
+      <div class="info-card">
+        <div style="font-size:13px;color:var(--subtext);margin-bottom:12px">Earn extra points for green activities</div>
+        <div class="info-row"><span class="info-label">Paperless Statements</span><span class="badge badge-green">+50 pts/mo</span></div>
+        <div class="info-row"><span class="info-label">Digital Transactions</span><span class="badge badge-green">+5 pts each</span></div>
+        <div class="info-row"><span class="info-label">E-KYC Completion</span><span class="badge badge-green">+200 pts</span></div>
+      </div>
+
+      <div class="section-title">Earn More Points</div>
+      <div class="offer-scroll" style="padding:0 0 4px">
+        <div class="offer-card" onclick="showToast('Shopping offer activated')">
+          <h4>🛍️ Shop & Earn</h4>
+          <p>5X points on partner shopping sites</p>
+          <div class="offer-badge">SHOP NOW</div>
+        </div>
+        <div class="offer-card" style="background:linear-gradient(135deg,#F3E5F5,#E1BEE7)" onclick="showToast('Dining offer activated')">
+          <h4>🍽️ Dine & Earn</h4>
+          <p>3X points at partner restaurants</p>
+          <div class="offer-badge" style="background:#7B1FA2">EXPLORE</div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:16px">Points History</div>
+      <div class="txn-list">
+        <div class="txn-item"><div class="txn-icon" style="background:#E8F5E9">🌿</div><div class="txn-details"><div class="txn-name">Green Banking Bonus</div><div class="txn-date">02 Apr 2026</div></div><div class="txn-amount"><div class="credit">+150 pts</div></div></div>
+        <div class="txn-item"><div class="txn-icon" style="background:#FFF3E0">🛍️</div><div class="txn-details"><div class="txn-name">Amazon Shopping</div><div class="txn-date">29 Mar 2026</div></div><div class="txn-amount"><div class="credit">+85 pts</div></div></div>
+        <div class="txn-item"><div class="txn-icon" style="background:#FCE4EC">❤️</div><div class="txn-details"><div class="txn-name">Redeemed - Flipkart</div><div class="txn-date">20 Mar 2026</div></div><div class="txn-amount"><div class="debit">-500 pts</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen" id="profile">
+  <div class="profile-header">
+    <div class="profile-avatar-big">RK</div>
+    <div class="profile-name">Ramesh Kumar</div>
+    <div class="profile-cif">CIF: 10●●●●●●78 | KYC: <span class="badge badge-green">✓ Verified</span></div>
+  </div>
+  <div class="page-content" style="padding-top:0;padding-bottom:80px">
+    <div class="section">
+      <div class="info-card">
+        <div class="info-row"><span class="info-label">📧 Email</span><span class="info-value">ram●●●●@gmail.com</span></div>
+        <div class="info-row"><span class="info-label">📱 Mobile</span><span class="info-value">+91 98●●● ●●●82</span></div>
+        <div class="info-row"><span class="info-label">📍 Branch</span><span class="info-value">Koramangala, Bengaluru</span></div>
+        <div class="info-row"><span class="info-label">🏦 IFSC</span><span class="info-value">SBIN0011522</span></div>
+      </div>
+
+      <div class="section-title">Security Settings</div>
+      <div class="info-card">
+        <div class="info-row" onclick="showToast('Change MPIN flow')"><span class="info-label">🔑 Change MPIN</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('Biometric settings')"><span class="info-label">👆 Biometric Login</span><span><span class="badge badge-green">ON</span></span></div>
+        <div class="info-row" onclick="showToast('Card lock/unlock')"><span class="info-label">🔒 Lock/Unlock Card</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('Login history')"><span class="info-label">📋 Login Activity</span><span style="color:var(--sbi-blue)">›</span></div>
+      </div>
+
+      <div class="section-title">Manage Cards</div>
+      <div class="info-card">
+        <div class="info-row" onclick="showModal('debitCard')"><span class="info-label">💳 Debit Card ●●●● 1234</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('Virtual debit card')"><span class="info-label">🖥️ Virtual Card</span><span><span class="badge badge-blue">Active</span></span></div>
+        <div class="info-row" onclick="showToast('Apply SBI credit card')"><span class="info-label">💳 Apply Credit Card</span><span style="color:var(--sbi-blue)">›</span></div>
+      </div>
+
+      <div class="section-title">More Services</div>
+      <div class="info-card">
+        <div class="info-row" onclick="showToast('Nomination settings')"><span class="info-label">👥 Nomination</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('WhatsApp banking setup')"><span class="info-label">💬 WhatsApp Banking</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('SBI Wecare FD')"><span class="info-label">🏆 SBI Wecare Deposit</span><span style="color:var(--sbi-blue)">›</span></div>
+        <div class="info-row" onclick="showToast('SMS Alerts managed')"><span class="info-label">📲 SMS Alerts</span><span><span class="badge badge-green">ON</span></span></div>
+      </div>
+
+      <button class="btn-outline" style="width:100%;margin-top:8px;color:var(--sbi-red);border-color:var(--sbi-red)" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav">
+  <div class="nav-item active" id="nav-home" onclick="goToTab('home')">
+    <div class="nav-icon">🏠</div>
+    <div class="nav-label">Home</div>
+  </div>
+  <div class="nav-item" id="nav-upi" onclick="goToTab('upi')">
+    <div class="nav-icon">💸</div>
+    <div class="nav-label">Pay</div>
+  </div>
+  <div class="nav-item nav-center" id="nav-services" onclick="goToTab('services')">
+    <div class="nav-icon-wrap">🏦</div>
+    <div class="nav-label">Services</div>
+  </div>
+  <div class="nav-item" id="nav-rewards" onclick="goToTab('rewards')">
+    <div class="nav-icon">⭐</div>
+    <div class="nav-label">Rewards</div>
+  </div>
+  <div class="nav-item" id="nav-profile" onclick="goToTab('profile')">
+    <div class="nav-icon">👤</div>
+    <div class="nav-label">Profile</div>
+  </div>
+</div>
+
+<script>
+// DATA
+const transactionsTemplate = [
+    {icon:'🛒',bg:'#E3F2FD',name:'BigBasket',date:'04 Apr 2026, 10:22 AM',type:'debit',amount:'₹1,248.00',bal:'₹1,24,580.00',ref:'UPI/263748120/BB'},
+    {icon:'💰',bg:'#E8F5E9',name:'Salary Credit',date:'01 Apr 2026, 09:00 AM',type:'credit',amount:'₹65,000.00',bal:'₹1,25,828.00',ref:'NEFT/HDFC/SAL0401'},
+    {icon:'🏠',bg:'#FFF3E0',name:'House Rent',date:'31 Mar 2026, 11:00 PM',type:'debit',amount:'₹18,000.00',bal:'₹60,828.00',ref:'UPI/263102938/RENT'},
+    {icon:'⚡',bg:'#F3E5F5',name:'BESCOM Bill',date:'28 Mar 2026, 02:15 PM',type:'debit',amount:'₹2,340.00',bal:'₹78,828.00',ref:'BBPS/BESCOM/3847'}
+];
+
+const upiContacts = [
+    {name:'Priya Sharma',vpa:'priya.sharma@ybl',color:'#E91E63',last:'₹5,000'},
+    {name:'Amit Verma',vpa:'amitv@oksbi',color:'#1976D2',last:'₹2,500'},
+    {name:'Sunita Rao',vpa:'sunita@paytm',color:'#388E3C',last:'₹1,200'},
+    {name:'Rahul Nair',vpa:'rahul.n@upi',color:'#F57C00',last:'₹800'},
+];
+
+// STATE Variables
+let pinBuffer = '';
+let currentTab = 'home';
+let toastTimer = null;
+
+let userProfile = null;
+let failedLoginAttempts = 0;
+let failedTxnAttempts = 0;
+let pendingTxn = null; 
+window.isHoneypot = false;
+
+// BIOMETRICS
+let devEnv = { ip: '192.168.1.1', device: 'Chrome Desktop' };
+let biometrics = { backspaces: 0, startTime: null, keystrokes: 0, directionChanges: 0, totalDist: 0, lastPt: null, lastAngle: 0 };
+
+document.addEventListener('keydown', (e) => {
+    if (!biometrics.startTime) biometrics.startTime = Date.now();
+    biometrics.keystrokes++;
+    if (e.key === 'Backspace' || e.key === 'Delete') biometrics.backspaces++;
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!biometrics.lastPt) { biometrics.lastPt = {x: e.clientX, y: e.clientY}; return; }
+    const dx = e.clientX - biometrics.lastPt.x;
+    const dy = e.clientY - biometrics.lastPt.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > 5) { 
+        biometrics.totalDist += dist;
+        const angle = Math.atan2(dy, dx);
+        const angleDiff = Math.abs(angle - biometrics.lastAngle);
+        if (angleDiff > 1) biometrics.directionChanges++; 
+        biometrics.lastAngle = angle;
+        biometrics.lastPt = {x: e.clientX, y: e.clientY};
+    }
+});
+
+async function notifyDigitalTwin(action, amount) {
+    try {
+        let hesitationMs = biometrics.startTime ? (Date.now() - biometrics.startTime) : 0;
+        let jitterScore = Math.min(100, Math.floor((biometrics.directionChanges / Math.max(1, biometrics.totalDist)) * 5000));
+        
+        let metrics = { backspaces: biometrics.backspaces, hesitationMs, jitterScore };
+        biometrics = { backspaces: 0, startTime: null, keystrokes: 0, directionChanges: 0, totalDist: 0, lastPt: null, lastAngle: 0 };
+
+        let payload = { 
+            userId: window.isHoneypot ? 'Hacker_Trap' : (userProfile ? userProfile.name : 'Unknown'),
+            action: action, 
+            amount: amount, 
+            ip: devEnv.ip, 
+            device: devEnv.device, 
+            metrics: metrics,
+            isHoneypot: window.isHoneypot
+        };
+
+        fetch('/api/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch(e) {}
+}
+
+window.onload = () => {
+    document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+    renderUPIContacts();
+    renderServicesTab('banking');
+    loadUserProfile();
+};
+
+function loadUserProfile() {
+    const saved = localStorage.getItem('yonoUserProfile');
+    if (saved) {
+        userProfile = JSON.parse(saved);
+        goTo('splash');
+    } else {
+        goTo('register');
+    }
+}
+
+function registerUser() {
+    const name = document.getElementById('regName').value;
+    const pin = document.getElementById('regPin').value;
+    if(name.length < 3 || pin.length !== 4) {
+        showToast('Please enter valid name and 4-digit PIN');
+        return;
+    }
+    userProfile = {
+        name: name,
+        pin: pin,
+        balance: 154000.00,
+        transactions: JSON.parse(JSON.stringify(transactionsTemplate))
+    };
+    localStorage.setItem('yonoUserProfile', JSON.stringify(userProfile));
+    notifyDigitalTwin('device_registered', 0);
+    showToast('Registration Successful');
+    goTo('login');
+}
+
+function updateUIForUser() {
+    let name = userProfile.name;
+    let bal = userProfile.balance;
+    let txns = userProfile.transactions || [];
+    
+    if (window.isHoneypot) {
+        name = 'System Admin';
+        bal = 500000.00;
+        document.getElementById('acNumber').textContent = '●●●● ●●●● 9999';
+    } else {
+        document.getElementById('acNumber').textContent = '●●●● ●●●● 4782';
+    }
+
+    const els = document.querySelectorAll('#tbName, .profile-name');
+    els.forEach(el => {if(el) el.textContent = name;});
+    
+    document.getElementById('tbAvatar').textContent = name.substring(0,2).toUpperCase();
+    document.querySelector('.profile-avatar-big').textContent = name.substring(0,2).toUpperCase();
+    document.getElementById('acBalance').textContent = parseFloat(bal).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+    renderTransactions(txns);
+}
+
+function renderTransactions(txns) {
+  const el = document.getElementById('recentTxns');
+  if(!el) return;
+  el.innerHTML = txns.slice(0,5).map(t => `<div class="txn-item"><div class="txn-icon" style="background:${t.bg}">${t.icon}</div><div class="txn-details"><div class="txn-name">${t.name}</div><div class="txn-date">${t.date}</div><div class="txn-ref">${t.ref}</div></div><div class="txn-amount"><div class="${t.type}">${t.type==='debit'?'- ':'+ '}${t.amount}</div><div class="bal">Bal: ${t.bal}</div></div></div>`).join('');
+}
+
+function renderUPIContacts() {
+  const el = document.getElementById('upiContacts');
+  if(!el) return;
+  el.innerHTML = upiContacts.map(c => `<div class="upi-contact" onclick="showModal('upiPay','${c.name}','${c.vpa}')"><div class="upi-avatar" style="background:${c.color}">${c.name[0]}</div><div><div class="upi-name">${c.name}</div><div class="upi-vpa">${c.vpa}</div></div><div style="margin-left:auto"><div class="upi-amount-hint">Last: ${c.last}</div></div></div>`).join('');
+}
+
+function renderServicesTab(tab) {
+  const el = document.getElementById('servicesTabContent');
+  if(!el) return;
+  el.innerHTML = `<div style='padding: 20px; text-align:center; color:#607080;'>Mock Services Loaded</div>`;
+}
+
+function switchServicesTab(el, tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// NAVIGATION
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  let t = document.getElementById(screen);
+  if(t) t.classList.add('active');
+  
+  if (screen === 'splash' && userProfile) {
+     setTimeout(() => goTo('login'), 2000); 
+  }
+  
+  const hasNav = ['home','upi','services','rewards','profile'].includes(screen);
+  const n = document.getElementById('bottomNav');
+  if(n) n.style.display = hasNav ? 'flex' : 'none';
+}
+
+function goToTab(tab) {
+  goTo(tab);
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + tab);
+  if (navEl) navEl.classList.add('active');
+}
+
+// PIN LOGIC (4 DIGIT)
+function enterPin(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  for (let i = 0; i < 4; i++) {
+    const p = document.getElementById('d' + i);
+    if(p) p.classList.toggle('filled', i < pinBuffer.length);
+  }
+  if (pinBuffer.length === 4) {
+    // Slight delay for UX
+    setTimeout(() => {
+      validateLoginPin();
+    }, 200);
+  }
+}
+
+function clearPin() {
+  if (pinBuffer.length > 0) {
+    pinBuffer = pinBuffer.slice(0, -1);
+    for (let i = 0; i < 4; i++) {
+        let p = document.getElementById('d' + i);
+        if(p) p.classList.toggle('filled', i < pinBuffer.length);
+    }
+  }
+}
+
+function validateLoginPin() {
+    const entered = pinBuffer;
+    
+    setTimeout(() => {
+      pinBuffer = '';
+      for (let i = 0; i < 4; i++) {
+          let p = document.getElementById('d' + i);
+          if(p) p.classList.remove('filled');
+      }
+    }, 100);
+
+    if (!userProfile) return;
+
+    if (entered === userProfile.pin) {
+        failedLoginAttempts = 0;
+        notifyDigitalTwin('login_success', 0);
+        updateUIForUser();
+        goTo('home');
+        goToTab('home');
+    } else {
+        failedLoginAttempts++;
+        if (failedLoginAttempts >= 3) {
+            window.isHoneypot = true;
+            failedLoginAttempts = 0;
+            notifyDigitalTwin('honeypot_login_breach', 0);
+            updateUIForUser(); // Generates fake data
+            goTo('home');
+            goToTab('home');
+            showToast('Login Successful');
+        } else {
+            notifyDigitalTwin('login_failed_attempt', 0);
+            showToast(`Incorrect PIN. Attempts left: ${3 - failedLoginAttempts}`);
+        }
+    }
+}
+
+// MODALS AND TRANSACTION
+function showModal(type, ...args) {
+  const body = document.getElementById('modalBody');
+  document.getElementById('modalOverlay').classList.add('open');
+
+  const modals = {
+    transfer: () => `<button class="modal-close" onclick="closeModal()">×</button><div class="modal-title">Fund Transfer</div><div class="input-group"><label>Beneficiary Account / UPI ID</label><input type="text" placeholder="Enter A/C no or UPI ID" id="benef"></div><div class="input-group"><label>Amount (₹)</label><input type="number" placeholder="0.00" id="amt"></div><div class="btn-row"><button class="btn-outline" onclick="closeModal()">Cancel</button><button class="btn-solid" onclick="initiateTxn('transfer')">Proceed</button></div>`,
+    upiPay: () => `<button class="modal-close" onclick="closeModal()">×</button><div class="modal-title">Pay ${args[0]}</div><div class="input-group"><label>Amount (₹)</label><input type="number" placeholder="0.00" id="upiAmtQ" style="font-size:24px;background:#F8FBFF;"></div><button class="btn-solid" style="width:100%;margin-top:8px" onclick="initiateTxn('upi', '${args[0]}')">Pay ${args[0]}</button>`,
+    authTxn: () => `<button class="modal-close" onclick="closeModal()">×</button><div class="modal-title" style="color:var(--sbi-blue)">Authenticate Payment</div><p style="font-size:13px; color:var(--subtext); margin-bottom: 16px;">Please enter your 4-digit MPIN to authorize ${args[0]} to ${args[1]}</p><div class="input-group"><input type="password" id="authPin" placeholder="4-Digit PIN" maxlength="4" style="font-size:24px; text-align:center; letter-spacing:10px;"></div><button class="btn-solid" style="width:100%;background:#003B7A" onclick="confirmTxn()">Confirm Payment</button>`  
+  };
+  body.innerHTML = (modals[type] || (() => `<div class="modal-title">Coming Soon</div>`))();
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function initiateTxn(type, benefName) {
+    let amtStr = type === 'transfer' ? document.getElementById('amt')?.value : document.getElementById('upiAmtQ')?.value;
+    let amt = parseFloat(amtStr);
+    
+    if(!amt || isNaN(amt)) { showToast('Enter a valid amount'); return; }
+    
+    if(!window.isHoneypot && amt > userProfile.balance) {
+        showToast('Insufficient Balance');
+        return;
+    }
+
+    pendingTxn = { type: type, amount: amt, name: benefName || document.getElementById('benef')?.value || 'Unknown' };
+    
+    showModal('authTxn', '₹' + amt.toLocaleString('en-IN'), pendingTxn.name);
+    biometrics.startTime = Date.now();
+}
+
+function confirmTxn() {
+    const pin = document.getElementById('authPin').value;
+    
+    if(pin !== userProfile.pin) {
+        failedTxnAttempts++;
+        if(failedTxnAttempts >= 3) {
+            window.isHoneypot = true;
+            failedTxnAttempts = 0;
+            notifyDigitalTwin('honeypot_txn_breach', pendingTxn.amount);
+            executePendingTxn(); 
+        } else {
+            notifyDigitalTwin('txn_auth_failed', pendingTxn.amount);
+            showToast(`Incorrect PIN. Attempts left: ${3 - failedTxnAttempts}`);
+        }
+        return;
+    }
+    
+    failedTxnAttempts = 0;
+    executePendingTxn();
+}
+
+function executePendingTxn() {
+    notifyDigitalTwin(`transaction_${pendingTxn.type}`, pendingTxn.amount);
+
+    if(!window.isHoneypot) {
+        userProfile.balance -= pendingTxn.amount;
+        userProfile.transactions.unshift({
+            icon: pendingTxn.type === 'upi' ? '📱' : '💸',
+            bg: '#FFF3E0',
+            name: pendingTxn.name,
+            date: new Date().toLocaleString('en-IN', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+            type: 'debit',
+            amount: '₹' + pendingTxn.amount.toLocaleString('en-IN', {minimumFractionDigits: 2}),
+            bal: '₹' + userProfile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2}),
+            ref: (pendingTxn.type==='upi'?'UPI/':'TXN/') + Date.now().toString().slice(-8)
+        });
+        localStorage.setItem('yonoUserProfile', JSON.stringify(userProfile));
+    }
+    
+    updateUIForUser();
+    closeModal();
+    showSuccess(`₹${pendingTxn.amount.toLocaleString('en-IN')} Sent!`, `Payment to ${pendingTxn.name} successful.`, 'TXN'+Date.now().toString().slice(-8));
+    pendingTxn = null;
+}
+
+function switchAccount(el, idx) {
+  document.querySelectorAll('.account-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function showSuccess(title, sub, ref) {
+  const el = document.getElementById('successOverlay');
+  if(!el) return;
+  document.getElementById('successTitle').textContent = title;
+  document.getElementById('successSub').textContent = sub;
+  document.getElementById('successRef').textContent = 'Ref: ' + ref;
+  el.classList.add('show');
+}
+
+function closeSuccess() {
+  document.getElementById('successOverlay').classList.remove('show');
+}
+ 
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+ 
+function logout() {
+  goTo('login');
+  document.getElementById('bottomNav').style.display = 'none';
+  window.isHoneypot = false; 
+  showToast('Logged out securely');
+}
+
+</script>
+</body>
+</html>
