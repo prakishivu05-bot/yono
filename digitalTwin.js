@@ -63,6 +63,15 @@ export class DigitalTwinEngine {
     return this.latestTwinState;
   }
 
+  /**
+   * Called to update the blockchain hashes for the dashboard
+   */
+  pushBlockchainData(ipfsHash, txHash) {
+    if (this.latestTwinState) {
+        this.latestTwinState.blockchain = { ipfsHash, txHash };
+    }
+  }
+
   // ============================================
   // REAL MODE: BEHAVIORAL ANALYSIS
   // ============================================
@@ -87,7 +96,8 @@ export class DigitalTwinEngine {
     return {
       anomaly: anomalyResult.anomaly,
       reasons: anomalyResult.reasons,
-      confidenceScore: profile.behaviorScore.consistencyScore
+      confidenceScore: profile.behaviorScore.consistencyScore,
+      shouldFlagAsHoneypot: anomalyResult.shouldFlagAsHoneypot || false
     };
   }
 
@@ -148,7 +158,31 @@ export class DigitalTwinEngine {
       reasons.push("High Value Transaction Alert");
     }
 
-    return { anomaly: isAnomaly, reasons };
+    // 5. LOGIN ANOMALIES (Advanced Behavioral Check)
+    let shouldFlagAsHoneypot = false;
+    if (event.action === 'login_failed_attempt' && event.metrics) {
+        if (event.metrics.timeBetweenAttemptsMs < 1000) {
+            isAnomaly = true;
+            reasons.push("Bot-like Rapid Retry (<1s)");
+            shouldFlagAsHoneypot = true;
+        }
+        
+        let hour = new Date().getHours();
+        if (hour >= 2 && hour <= 4) {
+             isAnomaly = true;
+             reasons.push("Unusual Login Time (2AM - 4AM)");
+        }
+
+        if (event.metrics.failedAttemptsCount >= 3) {
+            // After 3 failed attempts, if risk is high (consistency < 70) or there was an anomaly, route to honeypot
+            if (profile.behaviorScore.consistencyScore < 70 || isAnomaly || shouldFlagAsHoneypot) {
+                shouldFlagAsHoneypot = true;
+                reasons.push("Suspicious Repeated Failures");
+            }
+        }
+    }
+
+    return { anomaly: isAnomaly, reasons, shouldFlagAsHoneypot };
   }
 
   // ============================================

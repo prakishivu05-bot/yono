@@ -1,0 +1,58 @@
+{
+  "9876543210": {
+    "name": "John Tester",
+    "phone": "9876543210",
+    "pin": "1234",
+    "balance": 154000,
+    "transactions": [
+      {
+        "icon": "🛒",
+        "bg": "#E3F2FD",
+        "name": "BigBasket",
+        "date": "04 Apr 2026",
+        "type": "debit",
+        "amount": "₹1,248.00",
+        "bal": "₹1,24,580.00",
+        "ref": "UPI"
+      },
+      {
+        "icon": "💰",
+        "bg": "#E8F5E9",
+        "name": "Salary",
+        "date": "01 Apr 2026",
+        "type": "credit",
+        "amount": "₹65,000.00",
+        "bal": "₹1,25,828.00",
+        "ref": "NEFT"
+      }
+    ]
+  },
+  "8867060506": {
+    "name": "rahul",
+    "phone": "8867060506",
+    "pin": "1234",
+    "balance": 154000,
+    "transactions": [
+      {
+        "icon": "🛒",
+        "bg": "#E3F2FD",
+        "name": "BigBasket",
+        "date": "04 Apr 2026",
+        "type": "debit",
+        "amount": "₹1,248.00",
+        "bal": "₹1,24,580.00",
+        "ref": "UPI"
+      },
+      {
+        "icon": "💰",
+        "bg": "#E8F5E9",
+        "name": "Salary",
+        "date": "01 Apr 2026",
+        "type": "credit",
+        "amount": "₹65,000.00",
+        "bal": "₹1,25,828.00",
+        "ref": "NEFT"
+      }
+    ]
+  }
+}

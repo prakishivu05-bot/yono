@@ -349,6 +349,10 @@
       <input type="text" id="regName" placeholder="e.g. Rahul Verma">
     </div>
     <div class="input-group">
+      <label>Phone Number</label>
+      <input type="tel" id="regPhone" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]*" inputmode="numeric">
+    </div>
+    <div class="input-group">
       <label>Choose 4-Digit MPIN</label>
       <input type="password" id="regPin" placeholder="Enter exactly 4 digits" maxlength="4" pattern="[0-9]*" inputmode="numeric">
     </div>
@@ -721,6 +725,8 @@ let failedLoginAttempts = 0;
 let failedTxnAttempts = 0;
 let pendingTxn = null; 
 window.isHoneypot = false;
+let lastLoginAttemptTime = 0;
+let flaggedForHoneypot = false;
 
 // BIOMETRICS
 let devEnv = { ip: '192.168.1.1', device: 'Chrome Desktop' };
@@ -747,15 +753,16 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-async function notifyDigitalTwin(action, amount) {
+async function notifyDigitalTwin(action, amount, extraMetrics = {}) {
     try {
         let hesitationMs = biometrics.startTime ? (Date.now() - biometrics.startTime) : 0;
         let jitterScore = Math.min(100, Math.floor((biometrics.directionChanges / Math.max(1, biometrics.totalDist)) * 5000));
         
-        let metrics = { backspaces: biometrics.backspaces, hesitationMs, jitterScore };
+        let metrics = { backspaces: biometrics.backspaces, hesitationMs, jitterScore, ...extraMetrics };
         biometrics = { backspaces: 0, startTime: null, keystrokes: 0, directionChanges: 0, totalDist: 0, lastPt: null, lastAngle: 0 };
 
         let payload = { 
+            phone: localStorage.getItem('yonoDevicePhone'),
             userId: window.isHoneypot ? 'Hacker_Trap' : (userProfile ? userProfile.name : 'Unknown'),
             action: action, 
             amount: amount, 
@@ -765,12 +772,16 @@ async function notifyDigitalTwin(action, amount) {
             isHoneypot: window.isHoneypot
         };
 
-        fetch('/api/event', {
+        const response = await fetch('/api/event', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-    } catch(e) {}
+        const resData = await response.json();
+        return resData;
+    } catch(e) {
+        return { success: false };
+    }
 }
 
 window.onload = () => {
@@ -781,32 +792,42 @@ window.onload = () => {
 };
 
 function loadUserProfile() {
-    const saved = localStorage.getItem('yonoUserProfile');
-    if (saved) {
-        userProfile = JSON.parse(saved);
+    const savedPhone = localStorage.getItem('yonoDevicePhone');
+    if (savedPhone) {
         goTo('splash');
     } else {
         goTo('register');
     }
 }
 
-function registerUser() {
+async function registerUser() {
     const name = document.getElementById('regName').value;
+    const phone = document.getElementById('regPhone').value;
     const pin = document.getElementById('regPin').value;
-    if(name.length < 3 || pin.length !== 4) {
-        showToast('Please enter valid name and 4-digit PIN');
+    if(name.length < 3 || phone.length !== 10 || pin.length !== 4) {
+        showToast('Please enter valid name, 10-digit phone and 4-digit PIN');
         return;
     }
-    userProfile = {
-        name: name,
-        pin: pin,
-        balance: 154000.00,
-        transactions: JSON.parse(JSON.stringify(transactionsTemplate))
-    };
-    localStorage.setItem('yonoUserProfile', JSON.stringify(userProfile));
-    notifyDigitalTwin('device_registered', 0);
-    showToast('Registration Successful');
-    goTo('login');
+    
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, pin })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            localStorage.setItem('yonoDevicePhone', phone);
+            notifyDigitalTwin('device_registered', 0);
+            showToast('Registration Successful');
+            goTo('login');
+        } else {
+            showToast(data.error || 'Registration failed');
+        }
+    } catch(e) {
+        showToast('Network error during registration');
+    }
 }
 
 function updateUIForUser() {
@@ -861,7 +882,7 @@ function goTo(screen) {
   let t = document.getElementById(screen);
   if(t) t.classList.add('active');
   
-  if (screen === 'splash' && userProfile) {
+  if (screen === 'splash' && localStorage.getItem('yonoDevicePhone')) {
      setTimeout(() => goTo('login'), 2000); 
   }
   
@@ -904,7 +925,7 @@ function clearPin() {
   }
 }
 
-function validateLoginPin() {
+async function validateLoginPin() {
     const entered = pinBuffer;
     
     setTimeout(() => {
@@ -915,28 +936,54 @@ function validateLoginPin() {
       }
     }, 100);
 
-    if (!userProfile) return;
+    const devicePhone = localStorage.getItem('yonoDevicePhone');
+    if (!devicePhone) {
+        showToast('Device not registered');
+        return goTo('register');
+    }
 
-    if (entered === userProfile.pin) {
-        failedLoginAttempts = 0;
-        notifyDigitalTwin('login_success', 0);
-        updateUIForUser();
-        goTo('home');
-        goToTab('home');
-    } else {
-        failedLoginAttempts++;
-        if (failedLoginAttempts >= 3) {
-            window.isHoneypot = true;
-            failedLoginAttempts = 0;
-            notifyDigitalTwin('honeypot_login_breach', 0);
-            updateUIForUser(); // Generates fake data
+    // Prepare behavior metrics for backend
+    let hesitationMs = biometrics.startTime ? (Date.now() - biometrics.startTime) : 0;
+    let jitterScore = Math.min(100, Math.floor((biometrics.directionChanges / Math.max(1, biometrics.totalDist)) * 5000));
+    let metrics = { backspaces: biometrics.backspaces, hesitationMs, jitterScore };
+    biometrics = { backspaces: 0, startTime: null, keystrokes: 0, directionChanges: 0, totalDist: 0, lastPt: null, lastAngle: 0 };
+
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: devicePhone,
+                pin: entered,
+                metrics: metrics,
+                ip: devEnv.ip,
+                device: devEnv.device
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            userProfile = data.userProfile;
+            window.sessionToken = data.sessionToken;
+            window.isHoneypot = data.isHoneypotMode || false;
+            
+            updateUIForUser();
             goTo('home');
             goToTab('home');
-            showToast('Login Successful');
+            
+            if (window.isHoneypot) {
+                showToast('Login Successful'); // Lie successfully
+            }
         } else {
-            notifyDigitalTwin('login_failed_attempt', 0);
-            showToast(`Incorrect PIN. Attempts left: ${3 - failedLoginAttempts}`);
+            // Failed Login Logic Display
+            if (data.honeypotNext) {
+                showToast('Incorrect PIN. Please try again.'); // Secret trap is set
+            } else {
+                showToast(data.error || 'Incorrect PIN.');
+            }
         }
+    } catch(e) {
+        showToast('Network error during login');
     }
 }
 
@@ -1011,7 +1058,7 @@ function executePendingTxn() {
             bal: '₹' + userProfile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2}),
             ref: (pendingTxn.type==='upi'?'UPI/':'TXN/') + Date.now().toString().slice(-8)
         });
-        localStorage.setItem('yonoUserProfile', JSON.stringify(userProfile));
+        // Can optionally sync balanced transaction list back to server here if needed
     }
     
     updateUIForUser();
@@ -1051,6 +1098,8 @@ function logout() {
   goTo('login');
   document.getElementById('bottomNav').style.display = 'none';
   window.isHoneypot = false; 
+  window.sessionToken = null;
+  userProfile = null;
   showToast('Logged out securely');
 }
 

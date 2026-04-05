@@ -153,6 +153,7 @@
 
     <script>
         let lastActionTs = null;
+        let lastIpfsHash = null;
 
         async function fetchStatus() {
             try {
@@ -167,7 +168,7 @@
         function updateUI(data) {
             // Update Identity & Score
             document.getElementById('ui-user').textContent = data.userId;
-            document.getElementById('ui-mode').textContent = data.mode.toUpperCase();
+            document.getElementById('ui-mode').textContent = data.mode ? data.mode.toUpperCase() : "UNKNOWN";
             document.getElementById('ui-score').textContent = data.riskScore + "%";
             document.getElementById('ui-bar').style.width = data.riskScore + "%";
 
@@ -186,6 +187,12 @@
                 bar.style.background = "#4ade80";
             }
 
+            // Real Blockchain Visualization
+            if (data.blockchain && data.blockchain.ipfsHash !== lastIpfsHash) {
+                addRealBlockchainBlock(data.blockchain.ipfsHash, data.blockchain.txHash);
+                lastIpfsHash = data.blockchain.ipfsHash;
+            }
+
             // Update Ghost Log
             if (data.action && data.timestamp !== lastActionTs) {
                 const logContainer = document.getElementById('ui-log');
@@ -201,28 +208,20 @@
                 `;
                 logContainer.prepend(entry);
 
-                // If in Honeypot mode, add to Blockchain visual
-                if (data.mode === 'honeypot') {
-                    addBlockchainBlock(data.action);
-                }
-
                 lastActionTs = data.timestamp;
             }
         }
 
-        function addBlockchainBlock(action) {
+        function addRealBlockchainBlock(ipfs, tx) {
             const feed = document.getElementById('blockchain-feed');
             const block = document.createElement('div');
             block.className = 'block';
-            const hash = "0x" + Math.random().toString(16).slice(2, 12).toUpperCase();
             block.innerHTML = `
-                <div style="color:#fbbf24; font-weight:bold; margin-bottom:4px;">BLOCK MINED # ${Math.floor(Math.random()*9000 + 1000)}</div>
-                <div style="color:#94a3b8;">Prev: 0x${Math.random().toString(16).slice(2,6)}...</div>
-                <div style="color:#f8fafc; word-break:break-all;">Hash: ${hash}</div>
-                <div style="color:#4ade80; margin-top:4px;">Data Verified: ${action}</div>
+                <div style="color:#fbbf24; font-weight:bold; margin-bottom:4px;">✅ FORENSICS ANCHORED</div>
+                <div style="color:#94a3b8;">IPFS CID: <a href="https://gateway.pinata.cloud/ipfs/${ipfs}" target="_blank" style="color:#4ade80; text-decoration:none;">${ipfs.substring(0, 16)}...</a></div>
+                <div style="color:#f8fafc; word-break:break-all; font-size:10px; margin-top:2px;">TX: <a href="https://sepolia.etherscan.io/tx/${tx}" target="_blank" style="color:#38bdf8; text-decoration:none;">${tx}</a></div>
             `;
-            // Only add if not already visible to avoid spam
-            if (feed.children.length < 5) feed.prepend(block);
+            if (feed.children.length < 10) feed.prepend(block);
         }
 
         // 1-second dynamic polling
