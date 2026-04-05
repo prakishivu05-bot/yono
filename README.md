@@ -1,12 +1,11 @@
-# YONO Secure - Advanced Banking Fraud Intelligence Shield
+YONO Secure - Advanced Banking Fraud Intelligence Shield
 
-## 🚀 Project Overview
+ 🚀 Project Overview
 
 YONO Secure is a cutting-edge, multi-layered security evolution of the YONO banking application MVP. It is designed to proactively detect, trap, and record malicious activities in real-time. By integrating a multi-tiered security approach—including behavioral analytics, pre-commit transaction safety switches, and a persistent Shadow Honeypot—we protect legitimate users while actively deceiving attackers. 
 
 When a persistent threat or fraudulent login pattern is confirmed, the attacker is seamlessly redirected to a mirrored "bait" environment (Honeypot). All malicious telemetry and actions within this environment are immutably anchored to the Polygon/Sepolia blockchain via IPFS for secure, decentralized forensic threat intelligence.
-
-## ✨ Core Features
+ ✨ Core Features
 
 1. **Digital Twin Dashboard**: A high-fidelity, real-time monitoring interface streaming live user interactions, risk scores, and anomaly detection events.
 2. **Behavioral Biometrics**: Analyzes keystrokes, navigation paths, and typing speeds to identify non-human (bot) or suspicious human behavior.
@@ -15,7 +14,7 @@ When a persistent threat or fraudulent login pattern is confirmed, the attacker 
 5. **Decentralized Hacker Forensics**: Malicious telemetry (IPs, user agents, attempted actions, intercepted exploits) is bundled, uploaded to IPFS, and permanently anchored on-chain ensuring immutable, undeniable proof of the attack.
 6. **Zero-Knowledge Proof (ZKP) Architecture**: Ensures selective validation of secure actions without revealing sensitive core data.
 
-## 🛠️ Technology Stack
+ 🛠️ Technology Stack
 
 * **Frontend**: HTML5, Vanilla JS, CSS3, Chart.js (for real-time dashboard plotting)
 * **Backend**: Node.js, Express.js
@@ -23,7 +22,7 @@ When a persistent threat or fraudulent login pattern is confirmed, the attacker 
 * **Web3/Blockchain**: Polygon/Sepolia Network, Ethers.js, IPFS (Pinata)
 * **Storage**: Local JSON databases for rapid MVP deployment and proof of concept
 
-## 🚦 How to Run Locally
+🚦 How to Run Locally
 
 ### Prerequisites
 * Node.js v16+
@@ -47,5 +46,3 @@ When a persistent threat or fraudulent login pattern is confirmed, the attacker 
 ## 🔗 Live URLs
 
 * **GitHub Repository**: [https://github.com/prakishivu05-bot/yono](https://github.com/prakishivu05-bot/yono)
-
-*(Please make sure to fill the relevant live deployed URLs if any)*
