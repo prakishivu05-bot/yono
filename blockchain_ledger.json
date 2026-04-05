@@ -257,5 +257,57 @@
     },
     "prevHash": "0xa25ace7b",
     "hash": "0xd1a2c176"
+  },
+  {
+    "blockId": 21,
+    "timestamp": "2026-04-05T02:04:03.226Z",
+    "data": {
+      "userId": "Hacker_Identified",
+      "action": "honeypot_txn_breach",
+      "amount": 125,
+      "ip": "::1",
+      "device": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"
+    },
+    "prevHash": "0xd1a2c176",
+    "hash": "0x59202a4e"
+  },
+  {
+    "blockId": 22,
+    "timestamp": "2026-04-05T02:04:03.393Z",
+    "data": {
+      "userId": "Hacker_Identified",
+      "action": "transaction_transfer",
+      "amount": 125,
+      "ip": "::1",
+      "device": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"
+    },
+    "prevHash": "0x59202a4e",
+    "hash": "0xc7206043"
+  },
+  {
+    "blockId": 23,
+    "timestamp": "2026-04-05T04:35:56.546Z",
+    "data": {
+      "userId": "Hacker_Identified",
+      "action": "honeypot_txn_breach",
+      "amount": 500,
+      "ip": "::1",
+      "device": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"
+    },
+    "prevHash": "0xc7206043",
+    "hash": "0x61325576"
+  },
+  {
+    "blockId": 24,
+    "timestamp": "2026-04-05T04:35:56.696Z",
+    "data": {
+      "userId": "Hacker_Identified",
+      "action": "transaction_transfer",
+      "amount": 500,
+      "ip": "::1",
+      "device": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"
+    },
+    "prevHash": "0x61325576",
+    "hash": "0x0edd5f9a"
   }
 ]

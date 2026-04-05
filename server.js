@@ -84,10 +84,14 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ error: 'Phone already registered' });
     }
     
+    const clientIp = req.ip || req.connection.remoteAddress || req.body.ip || "127.0.0.1";
+    const userAgent = req.get('User-Agent') || req.body.device || "Unknown";
+
     db[phone] = {
         name,
         phone,
         pin,
+        baseline_metadata: { ip: clientIp, device: userAgent },
         balance: 154000.00,
         transactions: [
             {icon:'🛒',bg:'#E3F2FD',name:'BigBasket',date:'04 Apr 2026',type:'debit',amount:'₹1,248.00',bal:'₹1,24,580.00',ref:'UPI'},
@@ -121,7 +125,8 @@ app.post('/api/login', (req, res) => {
         mode: session.isHoneypot ? 'honeypot' : 'real',
         ip: clientIp,
         device: userAgent,
-        metrics: enrichedMetrics
+        metrics: enrichedMetrics,
+        baseline_metadata: userProfile ? userProfile.baseline_metadata : null
     };
 
     // If session is already marked honeypot, skip real auth and stay trapped
@@ -145,7 +150,7 @@ app.post('/api/login', (req, res) => {
         sessionTracker.set(phone, session);
 
         // Honeypot Decision Logic
-        if (session.failedAttempts >= 3 && twinResponse.shouldFlagAsHoneypot) {
+        if (session.failedAttempts >= 2 && twinResponse.riskScore > 70) {
             session.isHoneypot = true;
             sessionTracker.set(phone, session);
             return res.json({ success: false, honeypotNext: true, message: 'Incorrect PIN. Try again.' });

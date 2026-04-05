@@ -37,10 +37,9 @@ export class DigitalTwinEngine {
     }
 
     // DYNAMIC RISK CALCULATION: 
-    // Risk = 100 - Consistency (If score is 100, risk is 0%)
     let riskScore = (event.mode === "real") 
-      ? Math.max(0, 100 - result.confidenceScore) 
-      : result.confidenceScore;
+      ? result.riskScore 
+      : 100;
 
     // GHOST LOG DATA: Captured for the dashboard live feed
     this.latestTwinState = {
@@ -84,10 +83,10 @@ export class DigitalTwinEngine {
       this.userProfiles.set(event.userId, profile);
     }
 
-    // Perform behavioral check against the 1.5s and Jitter rules
+    // Perform exact additive risk calculation according to Honeypot specs
     const anomalyResult = this._detectAnomalies(event, profile);
 
-    // Update the profile (decreases consistency if anomalous)
+    // Update the profile
     this._updateRealProfile(profile, event, anomalyResult);
 
     // Log the event
@@ -96,8 +95,7 @@ export class DigitalTwinEngine {
     return {
       anomaly: anomalyResult.anomaly,
       reasons: anomalyResult.reasons,
-      confidenceScore: profile.behaviorScore.consistencyScore,
-      shouldFlagAsHoneypot: anomalyResult.shouldFlagAsHoneypot || false
+      riskScore: anomalyResult.totalRisk
     };
   }
 
@@ -106,7 +104,7 @@ export class DigitalTwinEngine {
       userId,
       knownIPs: new Map(),
       behaviorScore: {
-        consistencyScore: 100, // START AT 100 (0% RISK)
+        currentRisk: 0,
         anomalyCount: 0
       },
       lastUpdated: Date.now()
@@ -118,11 +116,7 @@ export class DigitalTwinEngine {
 
     if (anomalyResult.anomaly) {
       profile.behaviorScore.anomalyCount++;
-      // Drop consistency by 15 points per anomaly to make risk bar jump
-      profile.behaviorScore.consistencyScore = Math.max(0, profile.behaviorScore.consistencyScore - 15);
-    } else {
-      // Slow recovery: If the user behaves, the risk slowly goes back down
-      profile.behaviorScore.consistencyScore = Math.min(100, profile.behaviorScore.consistencyScore + 2);
+      profile.behaviorScore.currentRisk = Math.min(100, Math.max(profile.behaviorScore.currentRisk, anomalyResult.totalRisk));
     }
   }
 
@@ -133,56 +127,40 @@ export class DigitalTwinEngine {
   _detectAnomalies(event, profile) {
     let isAnomaly = false;
     let reasons = [];
+    let risk_score = 0;
 
-    // 1. DYNAMIC HESITATION (1.5s Threshold)
-    if (event.metrics && event.metrics.hesitationMs > 1500) {
-      isAnomaly = true;
-      reasons.push(`Hesitation Detected (${(event.metrics.hesitationMs / 1000).toFixed(1)}s)`);
+    // 1. Bot-Pattern: Attempt Frequency < 2 seconds (+40 risk)
+    if (event.action === 'login_failed_attempt' && event.metrics && event.metrics.timeBetweenAttemptsMs < 2000) {
+        risk_score += 40;
+        isAnomaly = true;
+        reasons.push("Bot-Pattern: Rapid Login Retries");
     }
 
-    // 2. ERRATIC MOVEMENT (Jitter > 15%)
-    if (event.metrics && event.metrics.jitterScore > 15) {
-      isAnomaly = true;
-      reasons.push("Erratic Mouse/Touch Jitter");
-    }
-
-    // 3. KEYBOARD ANOMALY (Backspaces during sensitive input)
-    if (event.metrics && event.metrics.backspaces > 2) {
-      isAnomaly = true;
-      reasons.push("High Correction Rate (Insecure)");
-    }
-
-    // 4. TRANSACTION LIMIT
-    if (event.amount > 5000) {
-      isAnomaly = true;
-      reasons.push("High Value Transaction Alert");
-    }
-
-    // 5. LOGIN ANOMALIES (Advanced Behavioral Check)
-    let shouldFlagAsHoneypot = false;
-    if (event.action === 'login_failed_attempt' && event.metrics) {
-        if (event.metrics.timeBetweenAttemptsMs < 1000) {
+    // 2. Unknown Entity: Differing IP or Device from Baseline (+30 risk)
+    if (event.baseline_metadata) {
+        if (event.ip !== event.baseline_metadata.ip || event.device !== event.baseline_metadata.device) {
+            risk_score += 30;
             isAnomaly = true;
-            reasons.push("Bot-like Rapid Retry (<1s)");
-            shouldFlagAsHoneypot = true;
-        }
-        
-        let hour = new Date().getHours();
-        if (hour >= 2 && hour <= 4) {
-             isAnomaly = true;
-             reasons.push("Unusual Login Time (2AM - 4AM)");
-        }
-
-        if (event.metrics.failedAttemptsCount >= 3) {
-            // After 3 failed attempts, if risk is high (consistency < 70) or there was an anomaly, route to honeypot
-            if (profile.behaviorScore.consistencyScore < 70 || isAnomaly || shouldFlagAsHoneypot) {
-                shouldFlagAsHoneypot = true;
-                reasons.push("Suspicious Repeated Failures");
-            }
+            reasons.push("Unknown Entity: Network/Device Mismatch");
         }
     }
 
-    return { anomaly: isAnomaly, reasons, shouldFlagAsHoneypot };
+    // 3. Time Anomaly: Login occurs at 3 AM / Deep Night (2AM-4AM) (+20 risk)
+    const currentHour = new Date().getHours();
+    if (currentHour >= 2 && currentHour <= 4) {
+        risk_score += 20;
+        isAnomaly = true;
+        reasons.push("Time Anomaly: Suspicious Operating Hours");
+    }
+    
+    // Add old heuristics if needed casually, but keeping spec dominant.
+    if (event.metrics && event.metrics.jitterScore > 15 && risk_score < 70) {
+       risk_score += 15;
+       isAnomaly = true;
+       reasons.push("Anomalous Jitter detected");
+    }
+
+    return { anomaly: isAnomaly, reasons, totalRisk: risk_score };
   }
 
   // ============================================

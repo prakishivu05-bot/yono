@@ -332,7 +332,7 @@
     </div>
     <div class="login-options" style="margin-top:24px">
       <span onclick="showToast('Forgot MPIN reset flow')">Forgot MPIN?</span>
-      <span onclick="showToast('New registration')">New User? Register</span>
+      <span onclick="goToRegister()">New User? Register</span>
     </div>
   </div>
 </div>
@@ -753,6 +753,14 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
+// SECURITY UTILS
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function notifyDigitalTwin(action, amount, extraMetrics = {}) {
     try {
         let hesitationMs = biometrics.startTime ? (Date.now() - biometrics.startTime) : 0;
@@ -771,6 +779,10 @@ async function notifyDigitalTwin(action, amount, extraMetrics = {}) {
             metrics: metrics,
             isHoneypot: window.isHoneypot
         };
+
+        if (window.isHoneypot) {
+            payload.evidenceHash = await sha256(JSON.stringify(payload));
+        }
 
         const response = await fetch('/api/event', {
             method: 'POST',
@@ -877,6 +889,16 @@ function switchServicesTab(el, tab) {
 }
 
 // NAVIGATION
+function goToRegister() {
+    let regName = document.getElementById('regName');
+    let regPhone = document.getElementById('regPhone');
+    let regPin = document.getElementById('regPin');
+    if(regName) regName.value = '';
+    if(regPhone) regPhone.value = '';
+    if(regPin) regPin.value = '';
+    goTo('register');
+}
+
 function goTo(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   let t = document.getElementById(screen);
